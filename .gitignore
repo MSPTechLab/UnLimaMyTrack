@@ -1,0 +1,12 @@
+# Excluded documentation and internal files
+FDS.md
+DEVELOPMENT.md
+agents.md
+
+# Build outputs
+bin/
+obj/
+.vs/
+*.user
+*.suo
+.DS_Store

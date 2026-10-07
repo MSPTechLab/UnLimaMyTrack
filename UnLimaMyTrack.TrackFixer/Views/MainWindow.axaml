@@ -1,0 +1,111 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:mapsui="clr-namespace:Mapsui.UI.Avalonia;assembly=Mapsui.UI.Avalonia"
+        mc:Ignorable="d"
+        d:DesignWidth="1200"
+        d:DesignHeight="780"
+        Width="1200"
+        Height="780"
+        MinWidth="960"
+        MinHeight="640"
+        x:Class="UnLimaMyTrack.TrackFixer.Views.MainWindow"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="UnLima Track Fixer"
+        RequestedThemeVariant="Light">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="ButtonBackgroundPointerOver">#E5E7EB</SolidColorBrush>
+        <SolidColorBrush x:Key="ButtonForegroundPointerOver">#111827</SolidColorBrush>
+        <SolidColorBrush x:Key="ButtonBorderBrushPointerOver">#CBD5E1</SolidColorBrush>
+        <SolidColorBrush x:Key="ButtonBackgroundPressed">#2563EB</SolidColorBrush>
+        <SolidColorBrush x:Key="ButtonForegroundPressed">#FFFFFF</SolidColorBrush>
+        <SolidColorBrush x:Key="ButtonBorderBrushPressed">#1D4ED8</SolidColorBrush>
+    </Window.Resources>
+
+    <Window.Styles>
+        <Style Selector="Button.sidebar-button">
+            <Setter Property="Foreground" Value="#111827" />
+            <Setter Property="Background" Value="#F9FAFB" />
+            <Setter Property="BorderBrush" Value="#E5E7EB" />
+        </Style>
+        <Style Selector="Button.sidebar-button:pointerover">
+            <Setter Property="Foreground" Value="#111827" />
+            <Setter Property="Background" Value="#E5E7EB" />
+            <Setter Property="BorderBrush" Value="#CBD5E1" />
+        </Style>
+        <Style Selector="Button.sidebar-button:pressed">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#2563EB" />
+            <Setter Property="BorderBrush" Value="#1D4ED8" />
+        </Style>
+        <Style Selector="Button.danger-button">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#EA580C" />
+            <Setter Property="BorderBrush" Value="#C2410C" />
+        </Style>
+        <Style Selector="Button.danger-button:pointerover">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#C2410C" />
+            <Setter Property="BorderBrush" Value="#9A3412" />
+        </Style>
+        <Style Selector="Button.success-button">
+            <Setter Property="Foreground" Value="#052E16" />
+            <Setter Property="Background" Value="#22C55E" />
+            <Setter Property="BorderBrush" Value="#16A34A" />
+        </Style>
+        <Style Selector="Button.success-button:pointerover">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#16A34A" />
+            <Setter Property="BorderBrush" Value="#15803D" />
+        </Style>
+        <Style Selector="NumericUpDown">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#111827" />
+        </Style>
+    </Window.Styles>
+
+    <Grid ColumnDefinitions="320,*">
+        <Border Grid.Column="0" Padding="16" Background="#1F2937">
+            <StackPanel Spacing="12">
+                <TextBlock Text="Track Fixer" FontSize="24" FontWeight="SemiBold" Foreground="White" />
+                <TextBlock Text="Load a GPX or TCX file, define the trusted area, remove broken points, then save the corrected activity." TextWrapping="Wrap" Foreground="#D1D5DB" />
+
+                 <Button Classes="sidebar-button" Content="Open activity" Click="OpenActivityClicked" />
+                 <Button x:Name="SetAnchorButton" Classes="sidebar-button" Content="Set anchor" Click="SetAnchorClicked" />
+                 <Button x:Name="ToggleEditButton" Classes="sidebar-button" Content="Editing mode: OFF" Click="ToggleEditClicked" />
+                 <Button Classes="danger-button" Content="Remove broken points" Click="RemoveBrokenPointsClicked" />
+                <Button Classes="success-button" Content="Save corrected track" Click="SaveActivityClicked" />
+
+                <Separator Margin="0,8" />
+
+                <TextBlock Text="Trusted radius, km" Foreground="White" />
+                <NumericUpDown x:Name="RadiusInput" Minimum="0.1" Maximum="1000" Increment="1" Value="100" />
+
+                <TextBlock Text="Max unrealistic speed, m/s" Foreground="White" />
+                <NumericUpDown x:Name="UnrealisticSpeedInput" Minimum="1" Maximum="200" Increment="1" Value="25" />
+
+                <TextBlock Text="Moving speed threshold, m/s" Foreground="White" />
+                <NumericUpDown x:Name="MovingSpeedInput" Minimum="0.1" Maximum="10" Increment="0.1" Value="0.8" />
+
+                <TextBlock Text="Anchor point" Foreground="White" />
+                <TextBlock x:Name="AnchorText" Text="Load an activity to set start point. Use Set anchor to move it." TextWrapping="Wrap" Foreground="#D1D5DB" />
+
+                <Separator Margin="0,8" />
+
+                <TextBlock Text="Activity stats" Foreground="White" />
+                <TextBlock x:Name="StatsText" Text="No activity loaded." TextWrapping="Wrap" Foreground="#D1D5DB" />
+
+                <Separator Margin="0,8" />
+
+                <TextBlock Text="Status" Foreground="White" />
+                <TextBlock x:Name="StatusText" Text="Ready." TextWrapping="Wrap" Foreground="#D1D5DB" />
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Column="1">
+            <mapsui:MapControl x:Name="ActivityMap" />
+        </Grid>
+    </Grid>
+</Window>
