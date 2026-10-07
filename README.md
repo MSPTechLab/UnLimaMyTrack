@@ -1,7 +1,7 @@
 # UnLima Track Fixer
 
 A cross-platform desktop application designed for fixing bike ride activity files containing spoofed, broken, or unrealistic GPS track points.
-There are no magic algoritm, program just detect waypoints outside of some trusted radius and deletes it from track. Later it is possible to edit segments to return to more or less real track.
+There are no magic algoritms, program just detect waypoints outside of some trusted radius and deletes it from track. Later it is possible to edit segments to return to more or less real track.
 
 ## Purpose & Functions
 
