@@ -10,3 +10,5 @@ obj/
 *.user
 *.suo
 .DS_Store
+*.zip
+*.bak
