@@ -11,6 +11,7 @@
         MinWidth="960"
         MinHeight="640"
         x:Class="UnLimaMyTrack.TrackFixer.Views.MainWindow"
+        KeyDown="Window_KeyDown"
         Icon="/Assets/avalonia-logo.ico"
         Title="UnLima Track Fixer"
         RequestedThemeVariant="Light">
@@ -75,6 +76,7 @@
                  <Button Classes="sidebar-button" Content="Open activity" Click="OpenActivityClicked" />
                  <Button x:Name="SetAnchorButton" Classes="sidebar-button" Content="Set anchor" Click="SetAnchorClicked" />
                  <Button x:Name="ToggleEditButton" Classes="sidebar-button" Content="Editing mode: OFF" Click="ToggleEditClicked" />
+                 <Button x:Name="UndoButton" Classes="sidebar-button" Content="Undo" Click="UndoClicked" IsEnabled="False" />
                  <Button Classes="danger-button" Content="Remove broken points" Click="RemoveBrokenPointsClicked" />
                 <Button Classes="success-button" Content="Save corrected track" Click="SaveActivityClicked" />
 

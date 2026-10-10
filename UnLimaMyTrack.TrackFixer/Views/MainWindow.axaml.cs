@@ -30,6 +30,7 @@ public partial class MainWindow : Window
     private int? _draggedPointIndex;
     private int? _draggedMidpointIndex;
     private MPoint? _currentDragWorld;
+    private readonly Stack<ActivityState> _undoStack = new();
 
     public MainWindow()
     {
@@ -82,6 +83,8 @@ public partial class MainWindow : Window
             var first = _activity.Points.FirstOrDefault();
             _anchorLatitude = first?.Latitude;
             _anchorLongitude = first?.Longitude;
+            _undoStack.Clear();
+            UndoButton.IsEnabled = false;
             RefreshMap(true);
             UpdateLabels($"Loaded {Path.GetFileName(path)}.");
         }
@@ -102,6 +105,7 @@ public partial class MainWindow : Window
         var radiusMeters = Convert.ToDouble(RadiusInput.Value ?? 100m) * 1000;
         var unrealisticSpeed = Convert.ToDouble(UnrealisticSpeedInput.Value ?? 25m);
         var movingSpeed = Convert.ToDouble(MovingSpeedInput.Value ?? 0.8m);
+        PushUndoState();
         var removed = _cleaner.RemoveBrokenPoints(_activity, _anchorLatitude.Value, _anchorLongitude.Value, radiusMeters, unrealisticSpeed);
         _recalculator.Recalculate(_activity, movingSpeed);
         RefreshMap(false);
@@ -248,16 +252,27 @@ public partial class MainWindow : Window
                 return;
             }
 
+            var resolution = ActivityMap.Map?.Navigator.Viewport.Resolution ?? 1.0;
+            double maxDistMeters = resolution * 15.0;
+            int? bestPointIndex = null;
+            double rightBestPointDist = double.MaxValue;
+
             for (var i = 0; i < _activity.Points.Count; i++)
             {
                 var p = _activity.Points[i];
                 var dist = GeoMath.DistanceMeters(p.Latitude, p.Longitude, lonLat.Latitude, lonLat.Longitude);
-                if (dist <= 12)
+                if (dist <= maxDistMeters && dist < rightBestPointDist)
                 {
-                    ShowPointDetails(p, i);
-                    e.Handled = true;
-                    return;
+                    rightBestPointDist = dist;
+                    bestPointIndex = i;
                 }
+            }
+
+            if (bestPointIndex is not null)
+            {
+                ShowPointDetails(_activity.Points[bestPointIndex.Value], bestPointIndex.Value);
+                e.Handled = true;
+                return;
             }
             return;
         }
@@ -269,6 +284,7 @@ public partial class MainWindow : Window
 
         if (_isSettingAnchor)
         {
+            PushUndoState();
             _anchorLatitude = lonLat.Latitude;
             _anchorLongitude = lonLat.Longitude;
             _isSettingAnchor = false;
@@ -284,23 +300,25 @@ public partial class MainWindow : Window
             return;
         }
 
+        var res = ActivityMap.Map?.Navigator.Viewport.Resolution ?? 1.0;
+        double maxDist = res * 15.0;
+
+        int? bestPoint = null;
+        double bestPointDist = double.MaxValue;
+
         for (var i = 0; i < _activity.Points.Count; i++)
         {
             var p = _activity.Points[i];
             var dist = GeoMath.DistanceMeters(p.Latitude, p.Longitude, lonLat.Latitude, lonLat.Longitude);
-            if (dist <= 9)
+            if (dist <= maxDist && dist < bestPointDist)
             {
-                _draggedPointIndex = i;
-                _currentDragWorld = world;
-                if (ActivityMap.Map?.Navigator is not null)
-                {
-                    ActivityMap.Map.Navigator.PanLock = true;
-                }
-                e.Pointer.Capture(ActivityMap);
-                e.Handled = true;
-                return;
+                bestPointDist = dist;
+                bestPoint = i;
             }
         }
+
+        int? bestMidpoint = null;
+        double bestMidpointDist = double.MaxValue;
 
         for (var i = 0; i < _activity.Points.Count - 1; i++)
         {
@@ -309,18 +327,36 @@ public partial class MainWindow : Window
             var midLat = (a.Latitude + b.Latitude) / 2.0;
             var midLon = (a.Longitude + b.Longitude) / 2.0;
             var dist = GeoMath.DistanceMeters(midLat, midLon, lonLat.Latitude, lonLat.Longitude);
-            if (dist <= 9)
+            if (dist <= maxDist && dist < bestMidpointDist)
             {
-                _draggedMidpointIndex = i;
-                _currentDragWorld = world;
-                if (ActivityMap.Map?.Navigator is not null)
-                {
-                    ActivityMap.Map.Navigator.PanLock = true;
-                }
-                e.Pointer.Capture(ActivityMap);
-                e.Handled = true;
-                return;
+                bestMidpointDist = dist;
+                bestMidpoint = i;
             }
+        }
+
+        if (bestPoint is not null && (bestMidpoint is null || bestPointDist <= bestMidpointDist))
+        {
+            _draggedPointIndex = bestPoint.Value;
+            _currentDragWorld = world;
+            if (ActivityMap.Map?.Navigator is not null)
+            {
+                ActivityMap.Map.Navigator.PanLock = true;
+            }
+            e.Pointer.Capture(ActivityMap);
+            e.Handled = true;
+            return;
+        }
+        else if (bestMidpoint is not null)
+        {
+            _draggedMidpointIndex = bestMidpoint.Value;
+            _currentDragWorld = world;
+            if (ActivityMap.Map?.Navigator is not null)
+            {
+                ActivityMap.Map.Navigator.PanLock = true;
+            }
+            e.Pointer.Capture(ActivityMap);
+            e.Handled = true;
+            return;
         }
     }
 
@@ -361,6 +397,7 @@ public partial class MainWindow : Window
             var i = _draggedPointIndex.Value;
             if (i >= 0 && i < _activity.Points.Count)
             {
+                PushUndoState();
                 _activity.Points[i].Latitude = lonLat.Latitude;
                 _activity.Points[i].Longitude = lonLat.Longitude;
             }
@@ -371,6 +408,7 @@ public partial class MainWindow : Window
             var i = _draggedMidpointIndex.Value;
             if (i >= 0 && i < _activity.Points.Count - 1)
             {
+                PushUndoState();
                 var a = _activity.Points[i];
                 var b = _activity.Points[i + 1];
                 var newNode = ActivityRecalculator.Interpolate(a, b, lonLat.Latitude, lonLat.Longitude);
@@ -631,4 +669,103 @@ public partial class MainWindow : Window
         latitude = 180.0 / Math.PI * (2.0 * Math.Atan(Math.Exp(latitude * Math.PI / 180.0)) - Math.PI / 2.0);
         return (latitude, longitude);
     }
+
+    private void UndoClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        PerformUndo();
+    }
+
+    private void Window_KeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Z && (e.KeyModifiers & KeyModifiers.Control) == KeyModifiers.Control)
+        {
+            PerformUndo();
+            e.Handled = true;
+        }
+    }
+
+    private void PerformUndo()
+    {
+        if (_activity is null || _undoStack.Count == 0)
+        {
+            return;
+        }
+
+        var state = _undoStack.Pop();
+        RestoreState(state);
+        UndoButton.IsEnabled = _undoStack.Count > 0;
+        RefreshMap(false);
+        UpdateLabels("Undo performed.");
+    }
+
+    private void PushUndoState()
+    {
+        if (_activity is null)
+        {
+            return;
+        }
+
+        var clonedPoints = _activity.Points.Select(p => new TrackPoint
+        {
+            Latitude = p.Latitude,
+            Longitude = p.Longitude,
+            Timestamp = p.Timestamp,
+            AltitudeMeters = p.AltitudeMeters,
+            DistanceMeters = p.DistanceMeters,
+            SpeedMetersPerSecond = p.SpeedMetersPerSecond,
+            HeartRate = p.HeartRate,
+            Cadence = p.Cadence,
+            Power = p.Power,
+            TemperatureCelsius = p.TemperatureCelsius
+        }).ToList();
+
+        var state = new ActivityState(
+            clonedPoints,
+            _activity.TotalDistanceMeters,
+            _activity.MovingTime,
+            _activity.AverageMovingSpeedMetersPerSecond,
+            _anchorLatitude,
+            _anchorLongitude
+        );
+
+        _undoStack.Push(state);
+        UndoButton.IsEnabled = true;
+    }
+
+    private void RestoreState(ActivityState state)
+    {
+        if (_activity is null)
+        {
+            return;
+        }
+
+        _activity.Points.Clear();
+        _activity.Points.AddRange(state.Points.Select(p => new TrackPoint
+        {
+            Latitude = p.Latitude,
+            Longitude = p.Longitude,
+            Timestamp = p.Timestamp,
+            AltitudeMeters = p.AltitudeMeters,
+            DistanceMeters = p.DistanceMeters,
+            SpeedMetersPerSecond = p.SpeedMetersPerSecond,
+            HeartRate = p.HeartRate,
+            Cadence = p.Cadence,
+            Power = p.Power,
+            TemperatureCelsius = p.TemperatureCelsius
+        }));
+        _activity.TotalDistanceMeters = state.TotalDistanceMeters;
+        _activity.MovingTime = state.MovingTime;
+        _activity.AverageMovingSpeedMetersPerSecond = state.AverageMovingSpeedMetersPerSecond;
+        _anchorLatitude = state.AnchorLatitude;
+        _anchorLongitude = state.AnchorLongitude;
+    }
+
+    private sealed record ActivityState(
+        List<TrackPoint> Points,
+        double TotalDistanceMeters,
+        TimeSpan MovingTime,
+        double AverageMovingSpeedMetersPerSecond,
+        double? AnchorLatitude,
+        double? AnchorLongitude
+    );
 }
