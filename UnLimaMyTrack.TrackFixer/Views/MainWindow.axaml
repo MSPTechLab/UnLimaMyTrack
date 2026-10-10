@@ -75,6 +75,8 @@
 
                  <Button Classes="sidebar-button" Content="Open activity" Click="OpenActivityClicked" />
                  <Button x:Name="SetAnchorButton" Classes="sidebar-button" Content="Set anchor" Click="SetAnchorClicked" />
+                 <Button x:Name="SetRouteStartButton" Classes="sidebar-button" Content="Set route start" Click="SetRouteStartClicked" />
+                 <Button x:Name="SetRouteEndButton" Classes="sidebar-button" Content="Set route end" Click="SetRouteEndClicked" />
                  <Button x:Name="ToggleEditButton" Classes="sidebar-button" Content="Editing mode: OFF" Click="ToggleEditClicked" />
                  <Button x:Name="UndoButton" Classes="sidebar-button" Content="Undo" Click="UndoClicked" IsEnabled="False" />
                  <Button Classes="danger-button" Content="Remove broken points" Click="RemoveBrokenPointsClicked" />

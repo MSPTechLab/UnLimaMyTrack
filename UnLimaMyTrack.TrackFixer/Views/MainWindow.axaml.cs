@@ -26,6 +26,8 @@ public partial class MainWindow : Window
     private double? _anchorLatitude;
     private double? _anchorLongitude;
     private bool _isSettingAnchor;
+    private bool _isSettingRouteStart;
+    private bool _isSettingRouteEnd;
     private bool _isEditingEnabled;
     private int? _draggedPointIndex;
     private int? _draggedMidpointIndex;
@@ -83,6 +85,12 @@ public partial class MainWindow : Window
             var first = _activity.Points.FirstOrDefault();
             _anchorLatitude = first?.Latitude;
             _anchorLongitude = first?.Longitude;
+            _isSettingAnchor = false;
+            _isSettingRouteStart = false;
+            _isSettingRouteEnd = false;
+            SetAnchorButton.Content = "Set anchor";
+            SetRouteStartButton.Content = "Set route start";
+            SetRouteEndButton.Content = "Set route end";
             _undoStack.Clear();
             UndoButton.IsEnabled = false;
             RefreshMap(true);
@@ -120,9 +128,47 @@ public partial class MainWindow : Window
             return;
         }
 
+        _isSettingRouteStart = false;
+        _isSettingRouteEnd = false;
         _isSettingAnchor = true;
         SetAnchorButton.Content = "Click map...";
+        SetRouteStartButton.Content = "Set route start";
+        SetRouteEndButton.Content = "Set route end";
         UpdateStatus("Click once on the map to set the anchor point.");
+    }
+
+    private void SetRouteStartClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_activity is null || _activity.Points.Count == 0)
+        {
+            UpdateStatus("Load an activity before setting route start.");
+            return;
+        }
+
+        _isSettingAnchor = false;
+        _isSettingRouteEnd = false;
+        _isSettingRouteStart = true;
+        SetRouteStartButton.Content = "Click map...";
+        SetRouteEndButton.Content = "Set route end";
+        SetAnchorButton.Content = "Set anchor";
+        UpdateStatus("Click once on the map to set the route start point.");
+    }
+
+    private void SetRouteEndClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_activity is null || _activity.Points.Count == 0)
+        {
+            UpdateStatus("Load an activity before setting route end.");
+            return;
+        }
+
+        _isSettingAnchor = false;
+        _isSettingRouteStart = false;
+        _isSettingRouteEnd = true;
+        SetRouteEndButton.Content = "Click map...";
+        SetRouteStartButton.Content = "Set route start";
+        SetAnchorButton.Content = "Set anchor";
+        UpdateStatus("Click once on the map to set the route end point.");
     }
 
     private void ToggleEditClicked(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -291,6 +337,43 @@ public partial class MainWindow : Window
             SetAnchorButton.Content = "Set anchor";
             RefreshMap(false);
             UpdateLabels("Anchor point updated.");
+            e.Handled = true;
+            return;
+        }
+
+        if (_isSettingRouteStart)
+        {
+            if (_activity.Points.Count > 0)
+            {
+                PushUndoState();
+                _activity.Points[0].Latitude = lonLat.Latitude;
+                _activity.Points[0].Longitude = lonLat.Longitude;
+                var movingSpeed = Convert.ToDouble(MovingSpeedInput.Value ?? 0.8m);
+                _recalculator.Recalculate(_activity, movingSpeed);
+            }
+            _isSettingRouteStart = false;
+            SetRouteStartButton.Content = "Set route start";
+            RefreshMap(false);
+            UpdateLabels("Route start point updated.");
+            e.Handled = true;
+            return;
+        }
+
+        if (_isSettingRouteEnd)
+        {
+            if (_activity.Points.Count > 0)
+            {
+                PushUndoState();
+                var last = _activity.Points[^1];
+                last.Latitude = lonLat.Latitude;
+                last.Longitude = lonLat.Longitude;
+                var movingSpeed = Convert.ToDouble(MovingSpeedInput.Value ?? 0.8m);
+                _recalculator.Recalculate(_activity, movingSpeed);
+            }
+            _isSettingRouteEnd = false;
+            SetRouteEndButton.Content = "Set route end";
+            RefreshMap(false);
+            UpdateLabels("Route end point updated.");
             e.Handled = true;
             return;
         }
