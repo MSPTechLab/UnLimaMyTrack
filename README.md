@@ -14,9 +14,10 @@ There are no magic algoritms, program just detect waypoints outside of some trus
 - **Trusted Anchor & Radius**: Define a trusted geographic area using an anchor point and trusted radius (default 100 km) to automatically remove erroneous points outside the area.
 - **Unrealistic Speed & Jump Removal**: Detects and cleans up impossible location jumps and consecutive GPS anomalies.
 - **Manual Track Editing**:
-  - Drag existing track points to new locations.
-  - Insert new track points via segment midpoint handles.
-  - Real-time route segment redrawing during dragging.
+   - Drag existing track points to new locations.
+   - Insert new track points via segment midpoint handles.
+   - Set route start / Set route end: Reposition the start or end of your route by clicking on the map, updating coordinates while preserving original telemetry.
+   - Real-time route segment redrawing during dragging.
 - **Automatic Telemetry Interpolation**: Automatically interpolates timestamps and sensor data (altitude, heart rate, cadence, power, temperature) for inserted points while preserving original timestamps on existing points.
 - **Metric Recalculation**: Automatically recalculates point-to-point distances, total distance, moving time, average speed, and moving average speed.
 - **Point Inspection**: Right-click any track point in editing mode to inspect its complete telemetry data.
@@ -27,7 +28,7 @@ There are no magic algoritms, program just detect waypoints outside of some trus
 2. **Review on Map**: Inspect your route displayed on the OpenStreetMap interactive map.
 3. **Set Trusted Anchor & Radius**: Set or adjust the anchor point and trusted radius to filter out erroneous or spoofed points.
 4. **Remove Broken Points**: Click the remove broken points function to automatically delete points outside the trusted radius and impossible jumps.
-5. **Manual Adjustments**: Drag points or insert new points via segment midpoints to refine the route.
+5. **Manual Adjustments**: Drag points, insert new points via segment midpoints, or use **Set route start** / **Set route end** to adjust track boundaries.
 6. **Save Corrected Activity**: Save the corrected track back to your desired file format.
 
 ## Installation Note
